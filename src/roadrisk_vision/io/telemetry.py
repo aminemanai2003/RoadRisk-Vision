@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import math
 from bisect import bisect_left
 from collections.abc import Iterable
 from datetime import datetime
@@ -134,3 +135,23 @@ class TelemetrySeries:
             if self.at(timestamp) is not None:
                 valid += 1
         return valid / total if total else 0.0
+
+    def distance_km(self) -> float | None:
+        """Sum valid consecutive GPS segments no wider than the interpolation limit."""
+        distance_m = 0.0
+        segment_count = 0
+        for left, right in zip(self.points, self.points[1:], strict=False):
+            if right.video_time_ms - left.video_time_ms > self.max_gap_ms:
+                continue
+            if None in {left.latitude, left.longitude, right.latitude, right.longitude}:
+                continue
+            lat1, lat2 = math.radians(left.latitude), math.radians(right.latitude)
+            delta_lat = lat2 - lat1
+            delta_lon = math.radians(right.longitude - left.longitude)
+            value = (
+                math.sin(delta_lat / 2) ** 2
+                + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
+            )
+            distance_m += 2 * 6_371_000 * math.asin(min(1.0, math.sqrt(value)))
+            segment_count += 1
+        return distance_m / 1000 if segment_count else None
