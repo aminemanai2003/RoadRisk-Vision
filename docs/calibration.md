@@ -24,3 +24,8 @@ requires a stable closing trend; stationary or receding objects use
 Profiles with residual above 5% of the measured reference length are rejected.
 Four-point homography has an exact reference fit; future checkerboard validation
 may populate a non-zero residual and lens intrinsics.
+
+The local dashboard includes an interactive **Calibrate camera** workspace. It
+decodes the chosen frame locally, labels the four click targets in order,
+validates point order/convexity/area, previews the polygon, and writes the same
+versioned profile used by the CLI. No frame is uploaded or saved by the UI.

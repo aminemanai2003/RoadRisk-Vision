@@ -76,7 +76,6 @@ def calibrate(
     output: Annotated[Path, typer.Option("--output", "-o")] = Path("calibration.json"),
 ) -> None:
     """Create a road-plane profile from four measured image points."""
-    del frame_ms
     info = probe_video(video)
     profile = CalibrationProfile.create(
         camera_id=camera_id,
@@ -86,6 +85,7 @@ def calibrate(
         reference_width_m=reference_width_m,
         reference_length_m=reference_length_m,
         corners=_corners(corners),
+        calibration_frame_ms=frame_ms,
     )
     profile.save(output)
     typer.secho(f"Calibration saved: {output}", fg=typer.colors.GREEN)

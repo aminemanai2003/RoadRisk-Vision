@@ -22,6 +22,7 @@ class CalibrationProfile(BaseModel):
     source_height: int = Field(gt=0)
     orientation_deg: int = 0
     crop_id: str = "full-frame"
+    calibration_frame_ms: int = Field(0, ge=0)
     mount_height_m: float = Field(gt=0)
     reference_width_m: float = Field(gt=0)
     reference_length_m: float = Field(gt=0)
@@ -43,6 +44,7 @@ class CalibrationProfile(BaseModel):
         lens_id: str = "default",
         orientation_deg: int = 0,
         crop_id: str = "full-frame",
+        calibration_frame_ms: int = 0,
     ) -> CalibrationProfile:
         if len(corners) != 4:
             raise ValueError(
@@ -68,6 +70,7 @@ class CalibrationProfile(BaseModel):
             source_height=height,
             orientation_deg=orientation_deg,
             crop_id=crop_id,
+            calibration_frame_ms=calibration_frame_ms,
             mount_height_m=mount_height_m,
             reference_width_m=reference_width_m,
             reference_length_m=reference_length_m,

@@ -19,7 +19,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dashboard = ["streamlit>=1.37,<2", "pandas>=2.2,<3"]
+dashboard = [
+  "streamlit>=1.37,<2",
+  "streamlit-image-coordinates>=0.1.9,<1",
+  "pandas>=2.2,<3",
+]
 inference = ["torch>=2.2,<3", "torchvision>=0.17,<1", "scipy>=1.12,<2"]
 telemetry = ["gpxpy>=1.6,<2"]
 dev = [
