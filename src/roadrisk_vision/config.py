@@ -51,7 +51,7 @@ class AppConfig(BaseModel):
     risk: RiskConfig = Field(default_factory=RiskConfig)
 
     @classmethod
-    def from_yaml(cls, path: Path | None) -> "AppConfig":
+    def from_yaml(cls, path: Path | None) -> AppConfig:
         if path is None:
             return cls()
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
