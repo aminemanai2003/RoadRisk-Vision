@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import json
 from pathlib import Path
 from typing import Self
 
@@ -66,4 +68,45 @@ def test_mock_pipeline_creates_complete_atomic_run(tmp_path, monkeypatch) -> Non
     assert (result / "annotated.mp4").is_file()
     assert (result / "manifest.json").read_text(encoding="utf-8").find('"complete"') > 0
     assert (result / "events.jsonl").is_file()
+    event = json.loads((result / "events.jsonl").read_text(encoding="utf-8").splitlines()[0])
+    assert "location" not in event["evidence"]
     assert not (result / "normalized.mp4").exists()
+
+
+def test_location_requires_explicit_opt_in(tmp_path, monkeypatch) -> None:
+    source = tmp_path / "trip.mp4"
+    source.write_bytes(b"private-video-fixture")
+    telemetry = tmp_path / "telemetry.csv"
+    with telemetry.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=["video_time_ms", "latitude", "longitude"],
+        )
+        writer.writeheader()
+        writer.writerows(
+            [
+                {"video_time_ms": 0, "latitude": 36.8, "longitude": 10.1},
+                {"video_time_ms": 1000, "latitude": 36.81, "longitude": 10.11},
+            ]
+        )
+
+    def fake_normalize(source_path: Path, destination: Path, fps_cap: int) -> VideoInfo:
+        del fps_cap
+        destination.write_bytes(source_path.read_bytes())
+        return VideoInfo(source_path, "h264", "mp4", 160, 90, 10.0, 0.6, 6)
+
+    monkeypatch.setattr("roadrisk_vision.pipeline.analyzer.normalize_video", fake_normalize)
+    monkeypatch.setattr("roadrisk_vision.pipeline.analyzer.FrameStream", FakeFrames)
+    monkeypatch.setattr("roadrisk_vision.pipeline.analyzer.FFmpegVideoWriter", FakeWriter)
+    result = analyze_video(
+        AnalysisOptions(
+            video=source,
+            output=tmp_path / "runs",
+            telemetry=telemetry,
+            backend="mock",
+            device="cpu",
+            include_location=True,
+        )
+    )
+    event = json.loads((result / "events.jsonl").read_text(encoding="utf-8").splitlines()[0])
+    assert event["evidence"]["location"] == {"latitude": 36.8, "longitude": 10.1}

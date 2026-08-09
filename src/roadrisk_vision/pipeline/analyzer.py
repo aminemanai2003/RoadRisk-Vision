@@ -124,6 +124,14 @@ def analyze_video(options: AnalysisOptions) -> Path:
                 )
                 frame_count += 1
         events = risk_engine.finish()
+        if config.include_location and telemetry is not None:
+            for event in events:
+                point = telemetry.at(event.start_time_ms)
+                if point is not None and point.latitude is not None and point.longitude is not None:
+                    event.evidence["location"] = {
+                        "latitude": point.latitude,
+                        "longitude": point.longitude,
+                    }
         duration_ms = timeline[-1]["video_time_ms"] if timeline else 0
         store.write_events(events)
         store.write_timeline(timeline)
