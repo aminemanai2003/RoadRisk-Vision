@@ -37,6 +37,9 @@ roadrisk analyze trip.mp4 --backend mock
 streamlit run apps/dashboard.py
 ```
 
+`roadrisk doctor` is read-only. It distinguishes missing and unsupported FFmpeg
+installations and prints tested platform-specific setup guidance.
+
 For real inference, install the inference extras and follow
 [`docs/models.md`](docs/models.md). RoadRisk Vision never downloads weights
 during analysis.

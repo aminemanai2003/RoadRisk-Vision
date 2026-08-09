@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 from typing import Annotated
 
-import cv2
 import typer
 
+from roadrisk_vision.diagnostics import format_diagnostics, run_diagnostics
 from roadrisk_vision.geometry import CalibrationProfile
 from roadrisk_vision.io import probe_video
 from roadrisk_vision.pipeline import AnalysisOptions, analyze_video
@@ -104,23 +103,13 @@ def inspect_run(
 
 
 @app.command()
-def doctor() -> None:
+def doctor(
+    json_output: Annotated[bool, typer.Option("--json", help="Emit machine-readable JSON")] = False,
+) -> None:
     """Check local prerequisites without changing the system."""
-    checks: dict[str, object] = {
-        "version": __version__,
-        "ffmpeg": shutil.which("ffmpeg"),
-        "ffprobe": shutil.which("ffprobe"),
-        "opencv": cv2.__version__,
-    }
-    try:
-        import torch
-
-        checks["torch"] = torch.__version__
-        checks["cuda_available"] = torch.cuda.is_available()
-    except ImportError:
-        checks["torch"] = None
-        checks["cuda_available"] = False
-    typer.echo(json.dumps(checks, indent=2))
+    report = run_diagnostics()
+    report["version"] = __version__
+    typer.echo(json.dumps(report, indent=2) if json_output else format_diagnostics(report))
 
 
 @models_app.command("download")
