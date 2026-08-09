@@ -11,7 +11,7 @@ requires-python = ">=3.11,<3.14"
 license = {file = "LICENSE"}
 authors = [{name = "aminemanai2003", email = "amine.manai@esprit.tn"}]
 dependencies = [
-  "numpy>=1.26,<3",
+  "numpy>=1.26,<2.4",
   "opencv-python-headless>=4.9,<5",
   "pydantic>=2.8,<3",
   "PyYAML>=6,<7",
