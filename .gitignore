@@ -10,6 +10,7 @@ htmlcov/
 .venv/
 dist/
 build/
+.cache/
 
 # Large/private RoadRisk artifacts
 models/

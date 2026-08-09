@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 
 from roadrisk_vision.analytics import build_exposure_report, write_exposure_report
+from roadrisk_vision.benchmark import run_benchmark, write_benchmark_result
 from roadrisk_vision.diagnostics import format_diagnostics, run_diagnostics
 from roadrisk_vision.geometry import CalibrationProfile
 from roadrisk_vision.io import probe_video
@@ -153,6 +154,32 @@ def exposure_report(
     outputs = write_exposure_report(report, output)
     for name, path in outputs.items():
         typer.secho(f"{name}: {path}", fg=typer.colors.GREEN)
+
+
+@app.command()
+def benchmark(
+    video: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    fixture_license: Annotated[str, typer.Option("--fixture-license")],
+    output: Annotated[Path, typer.Option("--output", "-o")] = Path("benchmark"),
+    run_output: Annotated[Path, typer.Option("--run-output")] = Path("runs"),
+    device: Annotated[str, typer.Option("--device")] = "cuda",
+    backend: Annotated[str, typer.Option("--backend")] = "hybrid",
+) -> None:
+    """Measure an analysis run and evaluate the published release gates."""
+    result = run_benchmark(
+        AnalysisOptions(
+            video=video,
+            output=run_output,
+            device=device,
+            backend=backend,
+        ),
+        fixture_license=fixture_license,
+    )
+    outputs = write_benchmark_result(result, output)
+    for name, path in outputs.items():
+        typer.secho(f"{name}: {path}", fg=typer.colors.GREEN)
+    if not result.passed:
+        raise typer.Exit(2)
 
 
 if __name__ == "__main__":

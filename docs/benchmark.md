@@ -9,3 +9,17 @@ The v0.1 gate is ≤5× source duration, ≤3.5 GB VRAM and ≤8 GB process RAM.
 
 CUDA and video codecs are not byte-deterministic. Acceptance means stable schema,
 IDs and ordering plus tolerance-bounded numeric results—not identical MP4 bytes.
+
+Generate the CC0 fixture and run the measured pipeline with:
+
+```powershell
+python scripts/generate_benchmark_video.py .cache/benchmark-1080p30.mp4
+roadrisk benchmark .cache/benchmark-1080p30.mp4 `
+  --fixture-license CC0-1.0 --device cuda --backend hybrid `
+  --output docs/benchmark-results/rtx2050
+```
+
+The command samples process-plus-child RSS, reads PyTorch peak allocated VRAM,
+records the fixture/model/commit provenance, and exits with code 2 when any gate
+fails. Mock or CPU runs are useful for testing the harness but cannot pass the
+CUDA/dual-model release gate.
