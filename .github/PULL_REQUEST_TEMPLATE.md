@@ -4,7 +4,7 @@
 
 ## Validation
 
-- [ ] `python -m ruff check src apps tests scripts`
+- [ ] `python -m ruff check src apps tests scripts examples`
 - [ ] `python -m pytest`
 - [ ] No weights, private footage, GPS, generated runs or credentials added
 

@@ -91,3 +91,7 @@ valid distance, event counts, severity and exposure-normalized rates. It does
 not estimate premiums, claim frequency or claim severity. Events are called
 `risk_events`; the term *near miss* is reserved for an explicitly defined,
 measurable low-TTC event.
+
+Generate a portfolio-style research summary with `roadrisk exposure-report`.
+See the [actuarial telematics guide](docs/actuarial-telematics.md) for the exact
+boundary between driving features and genuine actuarial claims modelling.

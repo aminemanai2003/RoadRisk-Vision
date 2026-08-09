@@ -8,6 +8,7 @@ from typing import Annotated
 
 import typer
 
+from roadrisk_vision.analytics import build_exposure_report, write_exposure_report
 from roadrisk_vision.diagnostics import format_diagnostics, run_diagnostics
 from roadrisk_vision.geometry import CalibrationProfile
 from roadrisk_vision.io import probe_video
@@ -136,6 +137,22 @@ def verify_models(
             typer.secho(failure, fg=typer.colors.RED)
         raise typer.Exit(1)
     typer.secho("All locked models verified.", fg=typer.colors.GREEN)
+
+
+@app.command("exposure-report")
+def exposure_report(
+    run_directories: Annotated[
+        list[Path],
+        typer.Argument(exists=True, file_okay=False, help="One or more completed run folders"),
+    ],
+    output: Annotated[Path, typer.Option("--output", "-o")] = Path("exposure_report"),
+    low_ttc_s: Annotated[float, typer.Option("--low-ttc-s")] = 2.0,
+) -> None:
+    """Aggregate risk events into exposure features without modelling insurance claims."""
+    report = build_exposure_report(run_directories, low_ttc_definition_s=low_ttc_s)
+    outputs = write_exposure_report(report, output)
+    for name, path in outputs.items():
+        typer.secho(f"{name}: {path}", fg=typer.colors.GREEN)
 
 
 if __name__ == "__main__":
