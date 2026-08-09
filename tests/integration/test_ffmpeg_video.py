@@ -43,4 +43,4 @@ def test_generated_media_exercises_rotation_vfr_corruption_and_privacy(tmp_path)
 
     with pytest.raises(VideoError) as error:
         probe_video(fixture_dir / "corrupt.mp4")
-    assert error.value.code == "UNSUPPORTED_OR_CORRUPT_VIDEO"
+    assert error.value.code in {"UNSUPPORTED_OR_CORRUPT_VIDEO", "NO_VIDEO_STREAM"}

@@ -69,12 +69,12 @@ def generate(output: Path) -> dict[str, object]:
             "-y",
             "-v",
             "error",
+            "-display_rotation:v:0",
+            "90",
             "-i",
             str(base),
             "-c",
             "copy",
-            "-metadata:s:v:0",
-            "rotate=90",
             str(rotated),
         ]
     )
