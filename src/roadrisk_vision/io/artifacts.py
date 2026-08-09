@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
-import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -106,10 +105,15 @@ class RunStore:
         self.manifest.error_code = code
         self.manifest.error_message = message
         self.write_manifest()
-        for name in ("annotated.mp4", "annotated.mp4.tmp", "normalized.mp4"):
+        for name in (
+            "annotated.mp4",
+            "annotated.mp4.tmp.mp4",
+            "normalized.mp4",
+            "normalized.mp4.tmp.mp4",
+        ):
             self.path(name).unlink(missing_ok=True)
         failed = self.root / f"{self.run_id}.{'cancelled' if cancelled else 'failed'}"
         if failed.exists():
-            shutil.rmtree(failed)
+            raise FileExistsError(f"Diagnostic run directory already exists: {failed}")
         self.partial.replace(failed)
         return failed

@@ -129,6 +129,7 @@ class FFmpegVideoWriter:
             if self.stdin is not None:
                 self.stdin.close()
             self.process.kill()
+            self.process.wait()
             self.path.with_suffix(self.path.suffix + ".tmp.mp4").unlink(missing_ok=True)
             return
         self.close()
