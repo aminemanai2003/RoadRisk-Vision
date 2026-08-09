@@ -17,7 +17,9 @@ class TelemetryError(ValueError):
 
 
 def _optional_float(value: str | None) -> float | None:
-    return float(value) if value not in {None, ""} else None
+    if value is None or value == "":
+        return None
+    return float(value)
 
 
 def _deduplicate(points: Iterable[TelemetryPoint]) -> list[TelemetryPoint]:
@@ -144,6 +146,13 @@ class TelemetrySeries:
             if right.video_time_ms - left.video_time_ms > self.max_gap_ms:
                 continue
             if None in {left.latitude, left.longitude, right.latitude, right.longitude}:
+                continue
+            if (
+                left.latitude is None
+                or left.longitude is None
+                or right.latitude is None
+                or right.longitude is None
+            ):
                 continue
             lat1, lat2 = math.radians(left.latitude), math.radians(right.latitude)
             delta_lat = lat2 - lat1

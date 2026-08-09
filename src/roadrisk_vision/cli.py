@@ -106,7 +106,7 @@ def inspect_run(
 @app.command()
 def doctor() -> None:
     """Check local prerequisites without changing the system."""
-    checks = {
+    checks: dict[str, object] = {
         "version": __version__,
         "ffmpeg": shutil.which("ffmpeg"),
         "ffprobe": shutil.which("ffprobe"),

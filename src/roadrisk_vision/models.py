@@ -6,11 +6,11 @@ import hashlib
 import json
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 def _lock(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
 
 
 def _sha256(path: Path) -> str:

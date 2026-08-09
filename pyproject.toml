@@ -27,6 +27,7 @@ dev = [
   "pytest-cov>=5,<7",
   "ruff>=0.6,<1",
   "mypy>=1.11,<2",
+  "types-PyYAML>=6.0,<7",
 ]
 
 [project.scripts]
@@ -50,4 +51,11 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 python_version = "3.11"
 packages = ["roadrisk_vision"]
 strict = true
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
 warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["backbone", "encoders.*", "hybridnets.*", "utils.*", "yolox.*", "gpxpy"]
+follow_imports = "skip"
+ignore_errors = true

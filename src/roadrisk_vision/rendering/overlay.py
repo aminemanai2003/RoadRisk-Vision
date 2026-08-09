@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from types import TracebackType
-from typing import BinaryIO, Self
+from typing import IO, Self
 
 import cv2
 import numpy as np
@@ -74,7 +74,7 @@ class FFmpegVideoWriter:
         self.size = size
         self.fps = fps
         self.process: subprocess.Popen[bytes] | None = None
-        self.stdin: BinaryIO | None = None
+        self.stdin: IO[bytes] | None = None
 
     def open(self) -> Self:
         ffmpeg = shutil.which("ffmpeg")
