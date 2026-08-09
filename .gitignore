@@ -18,7 +18,6 @@ runs/
 *.mp4
 *.mov
 *.gpx
-!demo/video/1.mp4
 *.log
 .env
 
