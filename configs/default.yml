@@ -1,0 +1,20 @@
+schema_version: 1
+device: auto
+output_root: runs
+normalized_fps_cap: 30
+backend: hybrid
+include_location: false
+models:
+  hybridnets_weights: models/hybridnets.pth
+  yolox_weights: models/yolox_s.pth
+  hybridnets_size: [640, 384]
+  yolox_size: [640, 640]
+  confidence: 0.35
+  nms_iou: 0.45
+  classes: [person, bicycle, car, motorcycle, bus, truck]
+risk:
+  monitor_ttc_s: 6.0
+  slow_down_ttc_s: 4.0
+  brake_risk_ttc_s: 2.5
+  min_event_duration_ms: 350
+  lane_departure_margin: 0.12

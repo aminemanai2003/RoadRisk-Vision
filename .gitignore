@@ -1,6 +1,29 @@
-*.pyc
-*.jpg
-*.json
-*.png
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+dist/
+build/
+
+# Large/private RoadRisk artifacts
+models/
+runs/
 *.pth
-events.out.tfevents.*
+*.pt
+*.onnx
+*.engine
+*.mp4
+*.mov
+*.gpx
+!demo/video/1.mp4
+*.log
+.env
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
