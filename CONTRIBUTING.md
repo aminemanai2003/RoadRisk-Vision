@@ -10,7 +10,7 @@ cd RoadRisk-Vision
 py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev,dashboard]"
-python -m ruff check src apps tests
+python -m ruff check src apps tests scripts
 python -m pytest
 ```
 

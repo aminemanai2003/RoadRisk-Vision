@@ -43,6 +43,9 @@ packages = ["src/roadrisk_vision"]
 [tool.pytest.ini_options]
 addopts = "-q --strict-markers"
 testpaths = ["tests"]
+markers = [
+  "integration: exercises installed FFmpeg/FFprobe with generated synthetic media",
+]
 
 [tool.ruff]
 target-version = "py311"
