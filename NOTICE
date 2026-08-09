@@ -1,0 +1,15 @@
+RoadRisk Vision
+Copyright (c) 2026 aminemanai2003
+
+This repository is derived from HybridNets:
+  https://github.com/datvuthanh/HybridNets
+  Copyright (c) 2022 Thanh Dat Vu
+  Licensed under the MIT License; see LICENSE.
+
+The optional YOLOX adapter is designed for models from:
+  https://github.com/Megvii-BaseDetection/YOLOX
+  Copyright (c) Megvii, Inc. and its affiliates
+  Licensed under the Apache License 2.0.
+
+Model weights and datasets are not distributed by this repository. Users are
+responsible for reviewing the terms of each downloaded model and dataset.

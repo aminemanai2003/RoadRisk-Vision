@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "name": "HybridNets D3 BDD100K",
+      "filename": "hybridnets.pth",
+      "source_repository": "https://github.com/datvuthanh/HybridNets",
+      "source_revision": "8735a6991a23c2d646a514a665193168f8251ebe",
+      "release": "v1.0",
+      "url": "https://github.com/datvuthanh/HybridNets/releases/download/v1.0/hybridnets.pth",
+      "size_bytes": 54732155,
+      "sha256": "b11271048773051c54a3adbc2586fe2b395f9feb72c641a4fb45ce1761c2678e",
+      "input_size": [640, 384]
+    },
+    {
+      "name": "YOLOX-S COCO",
+      "filename": "yolox_s.pth",
+      "source_repository": "https://github.com/Megvii-BaseDetection/YOLOX",
+      "source_revision": "e1052df71842031413f6030723c3607b839c80ce",
+      "release": "0.1.1rc0",
+      "url": "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth",
+      "size_bytes": 72089125,
+      "sha256": "f55ded7181e1b0c13285c56e7790b8f0e8f8db590fe4edb37f0b7f345c913a30",
+      "input_size": [640, 640]
+    }
+  ]
+}
