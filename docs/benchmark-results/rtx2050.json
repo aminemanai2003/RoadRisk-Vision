@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-12T21:06:25.014366Z",
+  "git_commit": "af1dcbe5a5cdce7d454bb9ab493984dc4545d796",
+  "fixture_basename": "benchmark-1080p30.mp4",
+  "fixture_license": "CC0-1.0",
+  "fixture_sha256": "2983fd5f7e180cc4dd643018ba9db112dd00bdf017d70ee4d7653c6c090f0cfc",
+  "resolution": "1920x1080",
+  "source_fps": 30.0,
+  "source_duration_s": 10.0,
+  "analyzed_frames": 300,
+  "backend": "hybrid",
+  "device": "cuda",
+  "wall_time_s": 49.41946859995369,
+  "duration_multiple": 4.941946859995369,
+  "peak_process_ram_gb": 2.5342941284179688,
+  "peak_vram_gb": 0.20294475555419922,
+  "model_provenance": {
+    "objects": {
+      "device": "cuda",
+      "input_size": [
+        640,
+        640
+      ],
+      "name": "yolox-s",
+      "weights": "yolox_s.pth"
+    },
+    "road": {
+      "device": "cuda",
+      "input_size": [
+        640,
+        384
+      ],
+      "name": "hybridnets-d3",
+      "weights": "hybridnets.pth"
+    }
+  },
+  "gates": {
+    "duration_at_most_5x": true,
+    "ram_at_most_8gb": true,
+    "vram_at_most_3_5gb": true,
+    "all_frames_processed": true,
+    "cuda_used": true,
+    "dual_model_backend": true
+  },
+  "passed": true,
+  "run_directory": "20260812T210535427964Z-2983fd5f",
+  "environment": {
+    "operating_system": "Windows-11-10.0.26200-SP0",
+    "python": "3.13.7",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+    "system_ram_gb": 15.72781753540039,
+    "gpu": "NVIDIA GeForce RTX 2050",
+    "gpu_memory_gb": 4.0,
+    "nvidia_driver": "610.74",
+    "cuda_runtime": "12.4",
+    "pytorch": "2.6.0+cu124",
+    "ffmpeg": "ffmpeg version 9.0-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+  }
+}
