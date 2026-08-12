@@ -5,7 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import platform
+import shutil
 import subprocess
+import sys
 import threading
 import time
 from datetime import UTC, datetime
@@ -17,6 +20,21 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from roadrisk_vision.io import probe_video
 from roadrisk_vision.pipeline import AnalysisOptions, analyze_video
+
+
+class BenchmarkEnvironment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    operating_system: str
+    python: str
+    cpu: str
+    system_ram_gb: float
+    gpu: str | None
+    gpu_memory_gb: float | None
+    nvidia_driver: str | None
+    cuda_runtime: str | None
+    pytorch: str | None
+    ffmpeg: str
 
 
 class BenchmarkResult(BaseModel):
@@ -42,6 +60,7 @@ class BenchmarkResult(BaseModel):
     gates: dict[str, bool]
     passed: bool
     run_directory: str
+    environment: BenchmarkEnvironment
 
 
 class PeakMemorySampler:
@@ -91,6 +110,54 @@ def _git_commit() -> str:
         timeout=10,
     )
     return result.stdout.strip() if result.returncode == 0 else "unknown"
+
+
+def _environment(torch_module: Any | None) -> BenchmarkEnvironment:
+    gpu = None
+    gpu_memory_gb = None
+    driver = None
+    nvidia_smi = shutil.which("nvidia-smi")
+    if nvidia_smi is not None:
+        result = subprocess.run(
+            [
+                nvidia_smi,
+                "--query-gpu=name,memory.total,driver_version",
+                "--format=csv,noheader,nounits",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            parts = [part.strip() for part in result.stdout.splitlines()[0].split(",")]
+            if len(parts) == 3:
+                gpu, memory_mib, driver = parts
+                gpu_memory_gb = float(memory_mib) / 1024
+    ffmpeg = shutil.which("ffmpeg")
+    ffmpeg_version = "unavailable"
+    if ffmpeg is not None:
+        result = subprocess.run(
+            [ffmpeg, "-version"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        if result.stdout:
+            ffmpeg_version = result.stdout.splitlines()[0].strip()
+    return BenchmarkEnvironment(
+        operating_system=platform.platform(),
+        python=sys.version.split()[0],
+        cpu=platform.processor() or os.environ.get("PROCESSOR_IDENTIFIER", "unknown"),
+        system_ram_gb=psutil.virtual_memory().total / 1024**3,
+        gpu=gpu,
+        gpu_memory_gb=gpu_memory_gb,
+        nvidia_driver=driver,
+        cuda_runtime=str(torch_module.version.cuda) if torch_module is not None else None,
+        pytorch=str(torch_module.__version__) if torch_module is not None else None,
+        ffmpeg=ffmpeg_version,
+    )
 
 
 def run_benchmark(
@@ -149,6 +216,7 @@ def run_benchmark(
         gates=gates,
         passed=all(gates.values()),
         run_directory=run_directory.name,
+        environment=_environment(torch),
     )
 
 
@@ -172,10 +240,25 @@ def write_benchmark_result(result: BenchmarkResult, output_base: Path) -> dict[s
 | Resolution / FPS | {result.resolution} / {result.source_fps:.2f} |
 | Source duration | {result.source_duration_s:.2f} s |
 | Wall time | {result.wall_time_s:.2f} s |
-| Duration multiple | {result.duration_multiple:.2f}× |
+| Duration multiple | {result.duration_multiple:.2f}x |
 | Peak process RAM | {result.peak_process_ram_gb:.2f} GB |
 | Peak VRAM | {result.peak_vram_gb if result.peak_vram_gb is not None else 'unavailable'} GB |
 | Frames | {result.analyzed_frames} |
+
+## Environment
+
+| Component | Version / hardware |
+|---|---|
+| OS | {result.environment.operating_system} |
+| Python | {result.environment.python} |
+| CPU | {result.environment.cpu} |
+| System RAM | {result.environment.system_ram_gb:.2f} GB |
+| GPU | {result.environment.gpu or 'unavailable'} |
+| GPU memory | {result.environment.gpu_memory_gb or 'unavailable'} GB |
+| NVIDIA driver | {result.environment.nvidia_driver or 'unavailable'} |
+| CUDA runtime | {result.environment.cuda_runtime or 'unavailable'} |
+| PyTorch | {result.environment.pytorch or 'unavailable'} |
+| FFmpeg | {result.environment.ffmpeg} |
 
 ## Release gates
 

@@ -20,6 +20,7 @@ roadrisk benchmark .cache/benchmark-1080p30.mp4 `
 ```
 
 The command samples process-plus-child RSS, reads PyTorch peak allocated VRAM,
-records the fixture/model/commit provenance, and exits with code 2 when any gate
-fails. Mock or CPU runs are useful for testing the harness but cannot pass the
+records the fixture/model/commit provenance, captures the hardware plus Python,
+PyTorch, CUDA and FFmpeg versions, and exits with code 2 when any gate fails.
+Mock or CPU runs are useful for testing the harness but cannot pass the
 CUDA/dual-model release gate.

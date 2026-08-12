@@ -37,6 +37,7 @@ def test_benchmark_calculates_gates_and_writes_provenance(tmp_path, monkeypatch)
     assert result.duration_multiple == 2
     assert result.gates["duration_at_most_5x"] is True
     assert result.gates["dual_model_backend"] is True
+    assert result.environment.python
     outputs = benchmark.write_benchmark_result(result, tmp_path / "benchmark")
     assert outputs["json"].is_file()
     assert "Release gates" in outputs["markdown"].read_text(encoding="utf-8")
