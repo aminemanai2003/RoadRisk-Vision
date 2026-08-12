@@ -33,6 +33,7 @@ class VideoInfo:
     fps: float
     duration_s: float
     frame_count: int | None
+    rotation_deg: int = 0
 
 
 def _require_tool(name: str) -> str:
@@ -62,7 +63,8 @@ def probe_video(path: Path) -> VideoInfo:
         "-select_streams",
         "v:0",
         "-show_entries",
-        "stream=codec_name,width,height,avg_frame_rate,nb_frames,duration:format=format_name,duration",
+        "stream=codec_name,width,height,avg_frame_rate,nb_frames,duration:"
+        "stream_tags=rotate:stream_side_data=rotation:format=format_name,duration",
         "-of",
         "json",
         str(path),
@@ -85,6 +87,10 @@ def probe_video(path: Path) -> VideoInfo:
         )
     duration = stream.get("duration") or payload.get("format", {}).get("duration") or 0
     frame_count = stream.get("nb_frames")
+    rotation = int(stream.get("tags", {}).get("rotate", 0))
+    for side_data in stream.get("side_data_list", []):
+        if "rotation" in side_data:
+            rotation = int(side_data["rotation"])
     return VideoInfo(
         path=path,
         codec=codec,
@@ -94,6 +100,7 @@ def probe_video(path: Path) -> VideoInfo:
         fps=_rate(stream.get("avg_frame_rate")),
         duration_s=float(duration),
         frame_count=int(frame_count) if frame_count not in {None, "N/A"} else None,
+        rotation_deg=rotation % 360,
     )
 
 

@@ -23,6 +23,7 @@ class RiskSignal:
     track_ids: tuple[int, ...]
     ttc_s: float | None = None
     distance_m: float | None = None
+    evidence: dict[str, float | str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -49,8 +50,23 @@ class RiskEngine:
     _open: dict[tuple[EventType, tuple[int, ...]], _OpenEvent] = field(default_factory=dict)
     events: list[RiskEvent] = field(default_factory=list)
 
-    def evaluate(self, detections: list[Detection], video_time_ms: int) -> RiskFrame:
+    def evaluate(
+        self,
+        detections: list[Detection],
+        video_time_ms: int,
+        lane_evidence: dict[str, float | str] | None = None,
+    ) -> RiskFrame:
         signals: list[RiskSignal] = []
+        if lane_evidence is not None:
+            signals.append(
+                RiskSignal(
+                    EventType.LANE_DEPARTURE,
+                    WarningState.LANE_DEPARTURE,
+                    Severity.WARNING,
+                    (),
+                    evidence=lane_evidence,
+                )
+            )
         for detection in detections:
             if not detection.in_path:
                 continue
@@ -139,7 +155,7 @@ class RiskEngine:
                 track_ids=list(opened.signal.track_ids),
                 min_ttc_s=opened.min_ttc_s,
                 min_distance_m=opened.min_distance_m,
-                evidence={"rule_version": 1},
+                evidence={"rule_version": 1, **opened.signal.evidence},
             )
         )
 

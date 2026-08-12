@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "roadrisk-vision"
-version = "0.1.0a0"
+version = "0.1.0"
 description = "Privacy-first post-drive dashcam analysis and risk-event exports"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
@@ -14,13 +14,30 @@ dependencies = [
   "numpy>=1.26,<2.4",
   "opencv-python-headless>=4.9,<5",
   "pydantic>=2.8,<3",
+  "psutil>=6,<8",
   "PyYAML>=6,<7",
   "typer>=0.12,<1",
 ]
 
 [project.optional-dependencies]
-dashboard = ["streamlit>=1.37,<2", "pandas>=2.2,<3"]
-inference = ["torch>=2.2,<3", "torchvision>=0.17,<1", "scipy>=1.12,<2"]
+dashboard = [
+  "streamlit>=1.37,<2",
+  "streamlit-image-coordinates>=0.1.9,<1",
+  "Pillow>=10,<13",
+  "pandas>=2.2,<3",
+]
+inference = [
+  "efficientnet-pytorch>=0.7.1,<1",
+  "matplotlib>=3.8,<4",
+  "prefetch-generator>=1.0.1,<2",
+  "pretrainedmodels>=0.7.4,<1",
+  "scipy>=1.12,<2",
+  "tensorboardX>=2.6,<3",
+  "timm>=0.6.13,<0.7",
+  "torch>=2.2,<3",
+  "torchvision>=0.17,<1",
+  "webcolors>=1.13,<25",
+]
 telemetry = ["gpxpy>=1.6,<2"]
 dev = [
   "pytest>=8.2,<9",
@@ -36,9 +53,21 @@ roadrisk = "roadrisk_vision.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/roadrisk_vision"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"backbone.py" = "backbone.py"
+"encoders" = "encoders"
+"hybridnets" = "hybridnets"
+"apps/dashboard.py" = "roadrisk_vision/dashboard/app.py"
+"models.lock.json" = "roadrisk_vision/models.lock.json"
+"projects/bdd100k.yml" = "projects/bdd100k.yml"
+"utils" = "utils"
+
 [tool.pytest.ini_options]
 addopts = "-q --strict-markers"
 testpaths = ["tests"]
+markers = [
+  "integration: exercises installed FFmpeg/FFprobe with generated synthetic media",
+]
 
 [tool.ruff]
 target-version = "py311"
@@ -59,3 +88,7 @@ warn_unused_ignores = false
 module = ["backbone", "encoders.*", "hybridnets.*", "utils.*", "yolox.*", "gpxpy"]
 follow_imports = "skip"
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["roadrisk_vision.perception.yolox_model"]
+disable_error_code = ["misc"]

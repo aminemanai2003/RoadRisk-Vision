@@ -44,6 +44,11 @@ Event types are `object_in_path`, `rapid_closing`, `collision_risk` and
 `lane_departure`. Warning states are `normal`, `monitor`, `slow_down`,
 `brake_risk`, `lane_departure` and `hazard`.
 
+Lane-departure evidence includes `direction`, segmentation confidence,
+ego-boundary clearance ratio, normalized lateral offset and fitted boundary
+positions. It contains no claim of driver intent and is emitted only after the
+same temporal event-duration rule as other risk events.
+
 ## Trip summary
 
 JSON stores duration, valid GPS distance, GPS coverage, event counts, events per

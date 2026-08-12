@@ -9,7 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from roadrisk_vision.config import AppConfig
-from roadrisk_vision.geometry import CalibrationProfile, GeometryEstimator
+from roadrisk_vision.geometry import (
+    CalibrationProfile,
+    GeometryEstimator,
+    estimate_lane_departure,
+)
 from roadrisk_vision.io import FrameStream, RunStore, load_telemetry, normalize_video
 from roadrisk_vision.perception import CompositeBackend, MockBackend, PerceptionBackend
 from roadrisk_vision.rendering import FFmpegVideoWriter, render_frame
@@ -111,7 +115,15 @@ def analyze_video(options: AnalysisOptions) -> Path:
                     frames.size,
                     perception.drivable_mask,
                 )
-                risk = risk_engine.evaluate(perception.detections, packet.video_time_ms)
+                lane_evidence = estimate_lane_departure(
+                    perception.lane_mask,
+                    boundary_margin_ratio=config.risk.lane_departure_margin,
+                )
+                risk = risk_engine.evaluate(
+                    perception.detections,
+                    packet.video_time_ms,
+                    lane_evidence.as_dict() if lane_evidence else None,
+                )
                 writer.write(render_frame(packet.image, perception, risk))
                 timeline.append(
                     {
@@ -120,6 +132,8 @@ def analyze_video(options: AnalysisOptions) -> Path:
                         "warning_state": risk.warning_state.value,
                         "severity": int(risk.severity) if risk.severity else None,
                         "object_count": len(perception.detections),
+                        "lane_departure": lane_evidence is not None,
+                        "lane_confidence": lane_evidence.confidence if lane_evidence else None,
                     }
                 )
                 frame_count += 1

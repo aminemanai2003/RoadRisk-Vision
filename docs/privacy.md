@@ -11,3 +11,7 @@ Default analysis is local after an explicit model download.
 Derived events can still reveal behavior and timing. Treat complete run folders
 as personal telematics data, obtain driver/passenger consent, and review local
 recording laws before collecting or sharing footage.
+
+Integration tests use locally generated CC0 color patterns and black frames.
+They never fetch or embed road footage and cover rotation, variable frame rate,
+corruption and zero-object behavior without introducing personal data.

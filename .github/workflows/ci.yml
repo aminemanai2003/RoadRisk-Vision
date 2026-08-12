@@ -22,6 +22,6 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev,dashboard]"
-      - run: python -m ruff check src apps tests
+      - run: python -m ruff check src apps tests scripts examples
       - run: python -m mypy src/roadrisk_vision
       - run: python -m pytest --cov=roadrisk_vision --cov-report=term-missing

@@ -11,5 +11,11 @@ The optional YOLOX adapter is designed for models from:
   Copyright (c) Megvii, Inc. and its affiliates
   Licensed under the Apache License 2.0.
 
+The interactive calibration UI uses frontend assets from:
+  https://github.com/blackary/streamlit-image-coordinates
+  Copyright (c) Zachary Blackwood
+  Licensed under the MIT License. RoadRisk Vision supplies a compatibility
+  wrapper for current Streamlit versions.
+
 Model weights and datasets are not distributed by this repository. Users are
 responsible for reviewing the terms of each downloaded model and dataset.
