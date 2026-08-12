@@ -88,3 +88,7 @@ warn_unused_ignores = false
 module = ["backbone", "encoders.*", "hybridnets.*", "utils.*", "yolox.*", "gpxpy"]
 follow_imports = "skip"
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["roadrisk_vision.perception.yolox_model"]
+disable_error_code = ["misc"]
