@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-from streamlit_image_coordinates import streamlit_image_coordinates
 
 from roadrisk_vision.dashboard import (
     CORNER_LABELS,
@@ -16,6 +15,7 @@ from roadrisk_vision.dashboard import (
     scale_display_click,
     validate_corner_order,
 )
+from roadrisk_vision.dashboard.image_coordinates import streamlit_image_coordinates
 from roadrisk_vision.geometry import CalibrationProfile
 from roadrisk_vision.pipeline import AnalysisOptions, analyze_video
 
@@ -132,9 +132,33 @@ with st.sidebar:
     device = st.selectbox("Compute device", ["auto", "cuda", "cpu"])
     include_location = st.checkbox("Include absolute location in exports", value=False)
     analyze_clicked = st.button("Analyze recording", type="primary", use_container_width=True)
+    st.divider()
+    st.subheader("Review completed run")
+    run_value = st.text_input("Completed run folder")
+    open_run_clicked = st.button("Open run", use_container_width=True)
 
 if "run_path" not in st.session_state:
     st.session_state.run_path = None
+
+if open_run_clicked:
+    selected_run = existing_path(run_value)
+    required = (
+        "manifest.json",
+        "events.jsonl",
+        "timeline.json",
+        "trip_summary.json",
+        "trip_summary.csv",
+        "annotated.mp4",
+    )
+    missing = [
+        name
+        for name in required
+        if selected_run is None or not (selected_run / name).is_file()
+    ]
+    if selected_run is None or missing:
+        st.error(f"Not a completed RoadRisk run; missing: {', '.join(missing)}")
+    else:
+        st.session_state.run_path = selected_run
 
 if analyze_clicked:
     video = existing_path(video_value)
@@ -176,7 +200,9 @@ if run_path:
     third.metric("Events/hour", f"{summary['risk_events_per_hour']:.2f}")
     fourth.metric(
         "Valid distance",
-        f"{summary['valid_distance_km']:.1f} km" if summary["valid_distance_km"] else "No GPS",
+        f"{summary['valid_distance_km']:.1f} km"
+        if summary["valid_distance_km"] is not None
+        else "No GPS",
     )
 
     video_column, provenance_column = st.columns([2, 1])
@@ -190,8 +216,10 @@ if run_path:
     st.subheader("Risk timeline")
     timeline = pd.read_json(run_path / "timeline.json")
     if not timeline.empty:
-        chart = timeline.set_index("video_time_ms")[["severity", "object_count"]]
-        st.line_chart(chart)
+        series = ["object_count"]
+        if timeline["severity"].notna().any():
+            series.append("severity")
+        st.line_chart(timeline, x="video_time_ms", y=series)
 
     st.subheader("Events")
     st.dataframe(pd.DataFrame(events), use_container_width=True, hide_index=True)

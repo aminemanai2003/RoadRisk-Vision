@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "roadrisk-vision"
-version = "0.1.0a0"
+version = "0.1.0"
 description = "Privacy-first post-drive dashcam analysis and risk-event exports"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
@@ -23,6 +23,7 @@ dependencies = [
 dashboard = [
   "streamlit>=1.37,<2",
   "streamlit-image-coordinates>=0.1.9,<1",
+  "Pillow>=10,<13",
   "pandas>=2.2,<3",
 ]
 inference = [
@@ -56,6 +57,8 @@ packages = ["src/roadrisk_vision"]
 "backbone.py" = "backbone.py"
 "encoders" = "encoders"
 "hybridnets" = "hybridnets"
+"apps/dashboard.py" = "roadrisk_vision/dashboard/app.py"
+"models.lock.json" = "roadrisk_vision/models.lock.json"
 "projects/bdd100k.yml" = "projects/bdd100k.yml"
 "utils" = "utils"
 

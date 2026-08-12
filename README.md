@@ -10,6 +10,8 @@ versioned dataset of road-risk events. It combines HybridNets road perception,
 YOLOX object detection, object tracking, optional camera calibration and
 optional GPS telemetry.
 
+![RoadRisk Vision reviewing a completed local analysis](docs/assets/dashboard-review.png)
+
 > [!IMPORTANT]
 > RoadRisk Vision is a research and driver-awareness tool. It does not control
 > a vehicle, replace an attentive driver, or provide certified collision alerts.
@@ -32,9 +34,9 @@ py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev,dashboard]"
 roadrisk doctor
-roadrisk models download --dry-run
+roadrisk models download
 roadrisk analyze trip.mp4 --backend mock
-streamlit run apps/dashboard.py
+roadrisk dashboard
 ```
 
 `roadrisk doctor` is read-only. It distinguishes missing and unsupported FFmpeg
@@ -65,9 +67,14 @@ and TTC are omitted unless the camera is calibrated and the estimate is stable.
 
 ## Project status
 
-The repository is building toward `v0.1.0`. The public schemas and mock-backed
-end-to-end pipeline are stable enough for contributors; real-model adapters and
-benchmarks remain experimental. See the [roadmap](docs/roadmap.md).
+Version `v0.1.0` provides the complete PC post-drive workflow: phone-video
+normalization, HybridNets + YOLOX-S perception, two-stage ByteTrack association,
+optional calibration and telemetry, annotated video, dashboard review and
+versioned research exports. The RTX 2050 release benchmark processed all 300
+frames of the licensed 1080p/30 fixture in 4.94x source duration while remaining
+inside every memory/performance gate. See the
+[full reproducible result](docs/benchmark-results/rtx2050.md) and
+[roadmap](docs/roadmap.md).
 
 ## Contributing
 

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -19,6 +21,16 @@ from roadrisk_vision.version import __version__
 app = typer.Typer(help="Offline, privacy-first dashcam risk analysis.", no_args_is_help=True)
 models_app = typer.Typer(help="Explicit model weight management.")
 app.add_typer(models_app, name="models")
+
+
+def _bundled_asset(name: str, repository_path: Path) -> Path:
+    """Resolve an asset from a source checkout or an installed wheel."""
+    if repository_path.is_file():
+        return repository_path
+    bundled = Path(__file__).parent / name
+    if bundled.is_file():
+        return bundled
+    raise FileNotFoundError(f"RoadRisk Vision asset is missing: {name}")
 
 
 def _corners(value: str) -> list[tuple[float, float]]:
@@ -114,25 +126,55 @@ def doctor(
     typer.echo(json.dumps(report, indent=2) if json_output else format_diagnostics(report))
 
 
+@app.command()
+def dashboard(
+    port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8501,
+    headless: Annotated[bool, typer.Option("--headless/--open-browser")] = False,
+) -> None:
+    """Launch the private local analysis and calibration dashboard."""
+    app_path = _bundled_asset(
+        "dashboard/app.py",
+        Path(__file__).parents[2] / "apps" / "dashboard.py",
+    )
+    command = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(app_path),
+        f"--server.port={port}",
+        f"--server.headless={str(headless).lower()}",
+        "--browser.gatherUsageStats=false",
+    ]
+    try:
+        completed = subprocess.run(command, check=False)
+    except ModuleNotFoundError as exc:  # pragma: no cover - subprocess owns import failure
+        raise typer.BadParameter("Install RoadRisk Vision with the 'dashboard' extra") from exc
+    if completed.returncode:
+        raise typer.Exit(completed.returncode)
+
+
 @models_app.command("download")
 def download_models(
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
-    lock_file: Annotated[Path, typer.Option("--lock-file")] = Path("models.lock.json"),
+    lock_file: Annotated[Path | None, typer.Option("--lock-file")] = None,
 ) -> None:
     """Download exactly the explicitly locked weights."""
     from roadrisk_vision.models import download_locked_models
 
-    download_locked_models(lock_file, Path("models"), dry_run=dry_run)
+    resolved_lock = lock_file or _bundled_asset("models.lock.json", Path("models.lock.json"))
+    download_locked_models(resolved_lock, Path("models"), dry_run=dry_run)
 
 
 @models_app.command("verify")
 def verify_models(
-    lock_file: Annotated[Path, typer.Option("--lock-file")] = Path("models.lock.json"),
+    lock_file: Annotated[Path | None, typer.Option("--lock-file")] = None,
 ) -> None:
     """Verify downloaded weight size and SHA-256."""
     from roadrisk_vision.models import verify_locked_models
 
-    failures = verify_locked_models(lock_file, Path("models"))
+    resolved_lock = lock_file or _bundled_asset("models.lock.json", Path("models.lock.json"))
+    failures = verify_locked_models(resolved_lock, Path("models"))
     if failures:
         for failure in failures:
             typer.secho(failure, fg=typer.colors.RED)
