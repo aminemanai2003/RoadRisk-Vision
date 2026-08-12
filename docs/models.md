@@ -7,7 +7,6 @@ sizes, SHA-256 checksums, source revisions and inference sizes.
 roadrisk models download
 roadrisk models verify
 python -m pip install -e ".[inference]"
-python -m pip install "git+https://github.com/Megvii-BaseDetection/YOLOX.git@e1052df71842031413f6030723c3607b839c80ce"
 ```
 
 - HybridNets D3: road and lane segmentation at 640×384.
@@ -19,3 +18,6 @@ BDD100K configuration. The cost is latency, so the models run sequentially and
 the release gate is 3.5 GB peak VRAM and five times source duration on RTX 2050.
 
 Model weights are excluded from Git and retain their upstream licenses/terms.
+The wheel contains the minimal Apache-2.0 YOLOX inference architecture needed
+to load the pinned official checkpoint; training code and its optional C++
+extension are deliberately excluded. See `NOTICE`.

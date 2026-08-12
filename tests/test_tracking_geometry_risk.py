@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from roadrisk_vision.config import RiskConfig
 from roadrisk_vision.geometry import CalibrationProfile, GeometryEstimator
@@ -12,7 +13,7 @@ from roadrisk_vision.schemas import (
     NullReason,
     WarningState,
 )
-from roadrisk_vision.tracking import IoUTracker
+from roadrisk_vision.tracking import ByteTrackAdapter, IoUTracker
 
 
 def detection(x: float = 40, track_id: int | None = None) -> Detection:
@@ -28,6 +29,16 @@ def test_iou_tracker_keeps_stable_per_run_id() -> None:
     tracker = IoUTracker()
     first = tracker.update([detection(40)], frame_index=0)[0]
     second = tracker.update([detection(42)], frame_index=1)[0]
+    assert first.track_id == second.track_id == 1
+
+
+def test_bytetrack_recovers_a_low_confidence_observation() -> None:
+    pytest.importorskip("scipy")
+    tracker = ByteTrackAdapter()
+    first = tracker.update([detection(40)], frame_index=0)[0]
+    weak = detection(42)
+    weak.confidence = 0.3
+    second = tracker.update([weak], frame_index=1)[0]
     assert first.track_id == second.track_id == 1
 
 

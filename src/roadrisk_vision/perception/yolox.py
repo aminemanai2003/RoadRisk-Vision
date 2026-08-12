@@ -39,19 +39,23 @@ class YoloxBackend:
             raise PerceptionError("MISSING_WEIGHTS", f"YOLOX weights not found: {weights}")
         try:
             import torch
-            from yolox.data.data_augment import preproc
-            from yolox.exp import get_exp
-            from yolox.utils import postprocess
+
+            from roadrisk_vision.perception.yolox_model import (
+                build_yolox_s,
+                checkpoint_model,
+                postprocess,
+                preproc,
+            )
         except ImportError as exc:
             raise PerceptionError(
                 "MISSING_YOLOX",
-                "Install the official YOLOX package as described in docs/models.md.",
+                "Install RoadRisk Vision with the inference extra.",
             ) from exc
         wants_cuda = device == "cuda" or (device == "auto" and torch.cuda.is_available())
         resolved = "cuda" if wants_cuda else "cpu"
-        model = get_exp(exp_name="yolox-s").get_model()
+        model = build_yolox_s()
         checkpoint = torch.load(weights, map_location=resolved, weights_only=False)
-        model.load_state_dict(checkpoint.get("model", checkpoint))
+        model.load_state_dict(checkpoint_model(checkpoint))
         model.eval().to(resolved)
         self._model = model
         self._torch = torch

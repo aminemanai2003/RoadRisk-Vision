@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from types import SimpleNamespace
-from typing import Any
 
 import numpy as np
 
@@ -70,48 +68,103 @@ class IoUTracker:
 
 
 class ByteTrackAdapter:
-    """Adapter for the BYTETracker shipped with the official YOLOX package."""
+    """Local two-stage ByteTrack association for the supported road classes.
 
-    def __init__(self, frame_rate: int = 30) -> None:
+    High-confidence observations are associated first; unmatched tracks then
+    get a second chance against low-confidence observations. This preserves
+    ByteTrack's central recovery behavior without its optional C++ extension.
+    """
+
+    def __init__(
+        self,
+        frame_rate: int = 30,
+        high_threshold: float = 0.5,
+        low_threshold: float = 0.1,
+        match_iou: float = 0.3,
+    ) -> None:
         try:
-            from yolox.tracker.byte_tracker import BYTETracker
+            from scipy.optimize import linear_sum_assignment
         except ImportError as exc:
-            raise RuntimeError("BYTETracker requires the official YOLOX package") from exc
-        args = SimpleNamespace(track_thresh=0.35, track_buffer=30, match_thresh=0.8, mot20=False)
-        self._tracker: Any = BYTETracker(args, frame_rate=frame_rate)
+            raise RuntimeError("ByteTrack requires the inference extra") from exc
+        self._assign = linear_sum_assignment
+        self.high_threshold = high_threshold
+        self.low_threshold = low_threshold
+        self.match_iou = match_iou
+        self.max_age = max(frame_rate, 1)
+        self._next_id = 1
+        self._tracks: dict[int, _Track] = {}
+
+    def _associate(
+        self,
+        track_ids: list[int],
+        detections: list[Detection],
+        frame_index: int,
+    ) -> tuple[set[int], set[int]]:
+        if not track_ids or not detections:
+            return set(), set()
+        costs = np.ones((len(track_ids), len(detections)), dtype=np.float32)
+        for row, track_id in enumerate(track_ids):
+            track = self._tracks[track_id]
+            for column, detection in enumerate(detections):
+                if track.label == detection.label:
+                    costs[row, column] = 1 - intersection_over_union(
+                        track.bbox, detection.bbox
+                    )
+        rows, columns = self._assign(costs)
+        matched_tracks: set[int] = set()
+        matched_detections: set[int] = set()
+        for row, column in zip(rows.tolist(), columns.tolist(), strict=True):
+            if 1 - float(costs[row, column]) < self.match_iou:
+                continue
+            track_id = track_ids[row]
+            detection = detections[column]
+            detection.track_id = track_id
+            self._tracks[track_id] = _Track(
+                track_id=track_id,
+                label=detection.label,
+                bbox=detection.bbox,
+                last_frame=frame_index,
+            )
+            matched_tracks.add(track_id)
+            matched_detections.add(column)
+        return matched_tracks, matched_detections
 
     def update(self, detections: list[Detection], frame_index: int) -> list[Detection]:
-        del frame_index
-        if not detections:
-            self._tracker.update(np.empty((0, 5), dtype=np.float32), (1, 1), (1, 1))
-            return detections
-        width = max(detection.bbox.x2 for detection in detections)
-        height = max(detection.bbox.y2 for detection in detections)
-        rows = np.asarray(
-            [
-                [
-                    detection.bbox.x1,
-                    detection.bbox.y1,
-                    detection.bbox.x2,
-                    detection.bbox.y2,
-                    detection.confidence,
-                ]
-                for detection in detections
-            ],
-            dtype=np.float32,
-        )
-        online = self._tracker.update(rows, (height, width), (height, width))
-        for track in online:
-            box = BoundingBox(
-                x1=track.tlbr[0],
-                y1=track.tlbr[1],
-                x2=track.tlbr[2],
-                y2=track.tlbr[3],
+        active = [
+            track_id
+            for track_id, track in self._tracks.items()
+            if frame_index - track.last_frame <= self.max_age
+        ]
+        high = [item for item in detections if item.confidence >= self.high_threshold]
+        low = [
+            item
+            for item in detections
+            if self.low_threshold <= item.confidence < self.high_threshold
+        ]
+        matched_tracks, matched_high = self._associate(active, high, frame_index)
+        remaining_tracks = [item for item in active if item not in matched_tracks]
+        self._associate(remaining_tracks, low, frame_index)
+        for index, detection in enumerate(high):
+            if index in matched_high:
+                continue
+            track_id = self._next_id
+            self._next_id += 1
+            detection.track_id = track_id
+            self._tracks[track_id] = _Track(
+                track_id=track_id,
+                label=detection.label,
+                bbox=detection.bbox,
+                last_frame=frame_index,
             )
-            candidate = max(
-                detections,
-                key=lambda detection: intersection_over_union(box, detection.bbox),
-            )
-            if intersection_over_union(box, candidate.bbox) >= 0.3:
-                candidate.track_id = int(track.track_id)
-        return detections
+        expired = [
+            track_id
+            for track_id, track in self._tracks.items()
+            if frame_index - track.last_frame > self.max_age
+        ]
+        for track_id in expired:
+            del self._tracks[track_id]
+        return [
+            detection
+            for detection in detections
+            if detection.track_id is not None or detection.confidence >= self.high_threshold
+        ]

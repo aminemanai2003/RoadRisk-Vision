@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Self
@@ -15,8 +16,15 @@ from roadrisk_vision.schemas import FramePacket, FramePerception
 
 
 class HybridNetsBackend:
-    def __init__(self, project_file: Path = Path("projects/bdd100k.yml")) -> None:
-        self.project_file = project_file
+    def __init__(self, project_file: Path | None = None) -> None:
+        candidates = (
+            Path("projects/bdd100k.yml"),
+            Path(__file__).resolve().parents[2] / "projects/bdd100k.yml",
+            Path(__file__).resolve().parents[3] / "projects/bdd100k.yml",
+        )
+        self.project_file = project_file or next(
+            (candidate for candidate in candidates if candidate.is_file()), candidates[0]
+        )
         self._model: Any = None
         self._torch: Any = None
         self._params: Any = None
@@ -27,6 +35,10 @@ class HybridNetsBackend:
         weights = config.hybridnets_weights
         if not weights.is_file():
             raise PerceptionError("MISSING_WEIGHTS", f"HybridNets weights not found: {weights}")
+        project_file = self.project_file.resolve()
+        upstream_root = project_file.parent.parent
+        if str(upstream_root) not in sys.path:
+            sys.path.insert(0, str(upstream_root))
         try:
             import torch
 
@@ -43,7 +55,7 @@ class HybridNetsBackend:
         resolved = "cuda" if wants_cuda else "cpu"
         checkpoint = torch.load(weights, map_location=resolved, weights_only=False)
         state = checkpoint.get("model", checkpoint)
-        params = Params(str(self.project_file))
+        params = Params(str(project_file))
         seg_channels = state["segmentation_head.0.weight"].size(0)
         seg_mode = BINARY_MODE if seg_channels == 1 else MULTICLASS_MODE
         model = HybridNetsBackbone(
@@ -54,6 +66,7 @@ class HybridNetsBackend:
             seg_classes=len(params.seg_list),
             backbone_name=None,
             seg_mode=seg_mode,
+            encoder_weights=None,
         )
         model.load_state_dict(state)
         model.requires_grad_(False).eval().to(resolved)
