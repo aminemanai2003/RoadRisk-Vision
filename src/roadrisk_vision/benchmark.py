@@ -21,6 +21,15 @@ from pydantic import BaseModel, ConfigDict, Field
 from roadrisk_vision.io import probe_video
 from roadrisk_vision.pipeline import AnalysisOptions, analyze_video
 
+GATE_LABELS = {
+    "duration_at_most_5x": "duration at most 5x",
+    "ram_at_most_8gb": "RAM at most 8 GB",
+    "vram_at_most_3_5gb": "VRAM at most 3.5 GB",
+    "all_frames_processed": "all frames processed",
+    "cuda_used": "CUDA used",
+    "dual_model_backend": "dual-model backend",
+}
+
 
 class BenchmarkEnvironment(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -146,10 +155,22 @@ def _environment(torch_module: Any | None) -> BenchmarkEnvironment:
         )
         if result.stdout:
             ffmpeg_version = result.stdout.splitlines()[0].strip()
+    cpu = platform.processor() or os.environ.get("PROCESSOR_IDENTIFIER", "unknown")
+    if sys.platform == "win32":
+        import winreg
+
+        try:
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
+            ) as key:
+                cpu = str(winreg.QueryValueEx(key, "ProcessorNameString")[0]).strip()
+        except OSError:
+            pass
     return BenchmarkEnvironment(
         operating_system=platform.platform(),
         python=sys.version.split()[0],
-        cpu=platform.processor() or os.environ.get("PROCESSOR_IDENTIFIER", "unknown"),
+        cpu=cpu,
         system_ram_gb=psutil.virtual_memory().total / 1024**3,
         gpu=gpu,
         gpu_memory_gb=gpu_memory_gb,
@@ -228,8 +249,12 @@ def write_benchmark_result(result: BenchmarkResult, output_base: Path) -> dict[s
     json_temporary.write_text(result.model_dump_json(indent=2) + "\n", encoding="utf-8")
     json_temporary.replace(json_path)
     gate_rows = "\n".join(
-        f"| {name.replace('_', ' ')} | {'PASS' if passed else 'FAIL'} |"
+        f"| {GATE_LABELS.get(name, name.replace('_', ' '))} | "
+        f"{'PASS' if passed else 'FAIL'} |"
         for name, passed in result.gates.items()
+    )
+    peak_vram = (
+        f"{result.peak_vram_gb:.3f}" if result.peak_vram_gb is not None else "unavailable"
     )
     markdown = f"""# RTX 2050 RoadRisk benchmark
 
@@ -242,7 +267,7 @@ def write_benchmark_result(result: BenchmarkResult, output_base: Path) -> dict[s
 | Wall time | {result.wall_time_s:.2f} s |
 | Duration multiple | {result.duration_multiple:.2f}x |
 | Peak process RAM | {result.peak_process_ram_gb:.2f} GB |
-| Peak VRAM | {result.peak_vram_gb if result.peak_vram_gb is not None else 'unavailable'} GB |
+| Peak VRAM | {peak_vram} GB |
 | Frames | {result.analyzed_frames} |
 
 ## Environment
