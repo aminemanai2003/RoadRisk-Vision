@@ -13,7 +13,7 @@ import typer
 from roadrisk_vision.analytics import build_exposure_report, write_exposure_report
 from roadrisk_vision.benchmark import run_benchmark, write_benchmark_result
 from roadrisk_vision.diagnostics import format_diagnostics, run_diagnostics
-from roadrisk_vision.geometry import CalibrationProfile
+from roadrisk_vision.geometry import MAX_LENS_RESIDUAL_PX, CalibrationProfile, LensProfile
 from roadrisk_vision.io import probe_video
 from roadrisk_vision.pipeline import AnalysisOptions, analyze_video
 from roadrisk_vision.version import __version__
@@ -103,6 +103,41 @@ def calibrate(
     )
     profile.save(output)
     typer.secho(f"Calibration saved: {output}", fg=typer.colors.GREEN)
+
+
+@app.command(name="calibrate-lens")
+def calibrate_lens(
+    images: Annotated[Path, typer.Argument(exists=True, file_okay=False, readable=True)],
+    camera_id: Annotated[str, typer.Option("--camera-id")],
+    lens_id: Annotated[str, typer.Option("--lens-id")] = "default",
+    board_columns: Annotated[int, typer.Option("--board-columns", help="inner corners")] = 9,
+    board_rows: Annotated[int, typer.Option("--board-rows", help="inner corners")] = 6,
+    square_size_m: Annotated[float, typer.Option("--square-size-m")] = 0.025,
+    orientation_deg: Annotated[int, typer.Option("--orientation-deg")] = 0,
+    max_residual_px: Annotated[float, typer.Option("--max-residual-px")] = MAX_LENS_RESIDUAL_PX,
+    output: Annotated[Path, typer.Option("--output", "-o")] = Path("lens.json"),
+) -> None:
+    """Estimate lens intrinsics from a local directory of checkerboard stills."""
+    try:
+        profile = LensProfile.from_images(
+            images,
+            camera_id=camera_id,
+            lens_id=lens_id,
+            board_columns=board_columns,
+            board_rows=board_rows,
+            square_size_m=square_size_m,
+            orientation_deg=orientation_deg,
+            max_residual_px=max_residual_px,
+        )
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED)
+        raise typer.Exit(1) from exc
+    profile.save(output)
+    typer.secho(
+        f"Lens profile saved: {output} "
+        f"({profile.image_count} views, residual {profile.residual_px:.3f} px)",
+        fg=typer.colors.GREEN,
+    )
 
 
 @app.command(name="inspect")

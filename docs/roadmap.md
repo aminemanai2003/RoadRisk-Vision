@@ -11,7 +11,8 @@
 
 ## After v0.1
 
-- Checkerboard lens-distortion calibration and improved temporal uncertainty.
+- Lens-profile use inside the analysis pipeline (checkerboard estimation has
+  landed; see `docs/calibration.md`), and improved temporal uncertainty.
 - Broader licensed road-condition validation datasets.
 - Dataset tooling and modernized HybridNets training under `training/`.
 
