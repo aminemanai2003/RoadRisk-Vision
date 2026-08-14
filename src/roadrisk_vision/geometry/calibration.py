@@ -233,22 +233,27 @@ class LensProfile(_JsonProfile):
             residual_px=float(residual),
         )
 
-    def compatibility(self, width: int, height: int) -> tuple[bool, str | None]:
-        if self.residual_px > MAX_LENS_RESIDUAL_PX:
-            return False, f"lens residual exceeds {MAX_LENS_RESIDUAL_PX} px"
-        if (width, height) == (self.image_width, self.image_height):
-            return True, None
-        if (width, height) == (self.image_height, self.image_width):
-            return False, "frame orientation is rotated relative to the lens profile"
-        return False, (
-            f"frame is {width}x{height} but the lens profile is "
-            f"{self.image_width}x{self.image_height}"
-        )
+    def compatibility(
+        self, width: int, height: int, orientation_deg: int = 0,
+    ) -> tuple[bool, str | None]:
+        norm_self = self.orientation_deg % 360
+        norm_frame = orientation_deg % 360
+        if norm_self != norm_frame:
+            return False, (
+                f"frame orientation {norm_frame}° does not match "
+                f"profile orientation {norm_self}°"
+            )
+        if (width, height) != (self.image_width, self.image_height):
+            return False, (
+                f"frame is {width}x{height} but the lens profile is "
+                f"{self.image_width}x{self.image_height}"
+            )
+        return True, None
 
-    def undistort(self, image: np.ndarray) -> np.ndarray:
+    def undistort(self, image: np.ndarray, orientation_deg: int = 0) -> np.ndarray:
         """Remove lens distortion from a frame captured with this lens."""
         height, width = image.shape[:2]
-        compatible, reason = self.compatibility(width, height)
+        compatible, reason = self.compatibility(width, height, orientation_deg)
         if not compatible:
             raise ValueError(f"Cannot undistort: {reason}")
         return cv2.undistort(

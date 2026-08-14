@@ -186,17 +186,35 @@ def test_empty_directory_is_rejected(tmp_path: Path) -> None:
         _calibrate(empty)
 
 
-def test_compatibility_rejects_rotated_and_mismatched_frames(checkerboard_dir: Path) -> None:
-    profile = _calibrate(checkerboard_dir)
-    assert profile.compatibility(*SIZE) == (True, None)
+def test_compatibility_checks_orientation_and_size(checkerboard_dir: Path) -> None:
+    profile = _calibrate(checkerboard_dir, orientation_deg=0)
+    assert profile.compatibility(*SIZE, orientation_deg=0) == (True, None)
 
-    rotated_ok, rotated_reason = profile.compatibility(SIZE[1], SIZE[0])
-    assert rotated_ok is False
-    assert rotated_reason is not None and "orientation" in rotated_reason
-
-    resized_ok, resized_reason = profile.compatibility(1920, 1080)
+    # Wrong size is rejected regardless of orientation.
+    resized_ok, resized_reason = profile.compatibility(1920, 1080, orientation_deg=0)
     assert resized_ok is False
     assert resized_reason is not None and "1920x1080" in resized_reason
+
+    # 90° mismatch is rejected via orientation check even when w/h swap matches.
+    ok_90, reason_90 = profile.compatibility(SIZE[1], SIZE[0], orientation_deg=90)
+    assert ok_90 is False
+    assert reason_90 is not None and "90°" in reason_90
+
+    # 180° mismatch: same w/h but different orientation — must be rejected.
+    ok_180, reason_180 = profile.compatibility(*SIZE, orientation_deg=180)
+    assert ok_180 is False
+    assert reason_180 is not None and "180°" in reason_180
+
+    # 270° mismatch.
+    ok_270, reason_270 = profile.compatibility(*SIZE, orientation_deg=270)
+    assert ok_270 is False
+    assert reason_270 is not None and "270°" in reason_270
+
+    # Profile at 90° is compatible only with frames declaring 90°.
+    profile_90 = _calibrate(checkerboard_dir, orientation_deg=90)
+    assert profile_90.compatibility(*SIZE, orientation_deg=90) == (True, None)
+    ok_0, _ = profile_90.compatibility(*SIZE, orientation_deg=0)
+    assert ok_0 is False
 
 
 def _row_bow_px(image: np.ndarray) -> float:
@@ -218,6 +236,18 @@ def _row_bow_px(image: np.ndarray) -> float:
         deviation = np.abs(cross) / length
         worst = max(worst, float(deviation.max()))
     return worst
+
+
+def test_raised_residual_threshold_produces_usable_profile(checkerboard_dir: Path) -> None:
+    """A profile saved with --max-residual-px > 1.0 must remain usable by
+    compatibility() and undistort() — no secondary gate should reject it."""
+    profile = _calibrate(checkerboard_dir, max_residual_px=5.0)
+    assert profile.residual_px > 0
+    ok, reason = profile.compatibility(*SIZE, orientation_deg=0)
+    assert ok is True, reason
+    distorted = _render_view(*_POSES[0])
+    corrected = profile.undistort(distorted)
+    assert corrected.shape == distorted.shape
 
 
 def test_undistort_straightens_the_board_and_guards_frame_size(checkerboard_dir: Path) -> None:
