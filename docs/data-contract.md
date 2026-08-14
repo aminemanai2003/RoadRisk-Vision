@@ -10,11 +10,11 @@ models so compatibility changes stay deliberate.
 roadrisk schemas export --output schemas/
 ```
 
-Writes one `.schema.json` file per artifact: manifest, detection, risk_event,
-trip_summary, and calibration_profile. Each file is a self-contained JSON Schema
-(draft 2020-12) with a pinned `schema_version` const, deterministic key order,
-and stable titles. Use these to validate artifacts in downstream tools without
-importing the Python package.
+Writes one `.schema.json` file per artifact: manifest, timeline_record,
+risk_event, trip_summary, and calibration_profile. Each file is a self-contained
+JSON Schema (draft 2020-12) with a pinned `schema_version` default, deterministic
+key order, and stable titles. Use these to validate artifacts in downstream tools
+without importing the Python package.
 
 ## Shared conventions
 
