@@ -15,7 +15,6 @@ import pytest
 from typer.testing import CliRunner
 
 from roadrisk_vision.cli import app
-from roadrisk_vision.geometry import LensProfile
 from roadrisk_vision.io.artifacts import RunStore
 from roadrisk_vision.schema_export import ARTIFACT_SCHEMAS, export_schemas
 from roadrisk_vision.schemas import TimelineRecord
