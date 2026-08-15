@@ -121,6 +121,20 @@ class RiskEvent(BaseModel):
     evidence: dict[str, Any] = Field(default_factory=dict)
 
 
+class TimelineRecord(BaseModel):
+    """One row of the per-frame ``timeline.json`` artifact."""
+
+    model_config = ConfigDict(extra="forbid")
+    schema_version: int = SCHEMA_VERSION
+    frame_index: int = Field(ge=0)
+    video_time_ms: int = Field(ge=0)
+    warning_state: WarningState
+    severity: int | None = None
+    object_count: int = Field(ge=0)
+    lane_departure: bool = False
+    lane_confidence: float | None = None
+
+
 class TripSummary(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: int = SCHEMA_VERSION

@@ -12,6 +12,7 @@ from roadrisk_vision.schemas.models import (
     RunStatus,
     Severity,
     TelemetryPoint,
+    TimelineRecord,
     TripSummary,
     WarningState,
 )
@@ -28,6 +29,7 @@ __all__ = [
     "RunStatus",
     "Severity",
     "TelemetryPoint",
+    "TimelineRecord",
     "TripSummary",
     "WarningState",
 ]
