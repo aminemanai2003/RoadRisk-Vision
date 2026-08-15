@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from roadrisk_vision.schemas import Manifest, RiskEvent, RunStatus, TripSummary
+from roadrisk_vision.schemas import Manifest, RiskEvent, RunStatus, TimelineRecord, TripSummary
 from roadrisk_vision.version import __version__
 
 
@@ -71,8 +71,9 @@ class RunStore:
         records = "".join(event.model_dump_json() + "\n" for event in events)
         _atomic_text(self.path("events.jsonl"), records)
 
-    def write_timeline(self, timeline: list[dict[str, Any]]) -> None:
-        _atomic_text(self.path("timeline.json"), _json(timeline))
+    def write_timeline(self, timeline: list[TimelineRecord]) -> None:
+        records = [record.model_dump(mode="json") for record in timeline]
+        _atomic_text(self.path("timeline.json"), _json(records))
 
     def write_summary(self, summary: TripSummary) -> None:
         _atomic_text(self.path("trip_summary.json"), _json(summary))

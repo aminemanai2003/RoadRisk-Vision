@@ -15,7 +15,9 @@ import pytest
 from typer.testing import CliRunner
 
 from roadrisk_vision.cli import app
+from roadrisk_vision.io.artifacts import RunStore
 from roadrisk_vision.schema_export import ARTIFACT_SCHEMAS, export_schemas
+from roadrisk_vision.schemas import TimelineRecord
 from roadrisk_vision.schemas.models import SCHEMA_VERSION
 
 runner = CliRunner()
@@ -222,6 +224,17 @@ def test_sample_records_validate_against_pydantic_models() -> None:
         roundtrip = json.loads(instance.model_dump_json())
         for key in record:
             assert key in roundtrip, f"{name}: field {key} lost in round-trip"
+
+
+def test_timeline_writer_emits_versioned_records(tmp_path: Path) -> None:
+    source = tmp_path / "clip.mp4"
+    source.write_bytes(b"test video")
+    store = RunStore(tmp_path / "runs", source, "cpu", "mock", False)
+
+    store.write_timeline([TimelineRecord.model_validate(_TIMELINE_RECORD)])
+
+    records = json.loads(store.path("timeline.json").read_text(encoding="utf-8"))
+    assert records == [_TIMELINE_RECORD]
 
 
 def test_sample_records_conform_to_exported_schemas(tmp_path: Path) -> None:
