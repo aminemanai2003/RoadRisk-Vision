@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from roadrisk_vision.geometry.calibration import CalibrationProfile
+from roadrisk_vision.geometry.calibration import CalibrationProfile, LensProfile
 from roadrisk_vision.schemas.models import (
     Manifest,
     RiskEvent,
@@ -21,6 +21,7 @@ ARTIFACT_SCHEMAS: dict[str, type[BaseModel]] = {
     "risk_event": RiskEvent,
     "trip_summary": TripSummary,
     "calibration_profile": CalibrationProfile,
+    "lens_profile": LensProfile,
 }
 
 

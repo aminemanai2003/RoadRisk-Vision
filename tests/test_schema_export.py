@@ -110,12 +110,30 @@ _CALIBRATION_PROFILE_RECORD = {
     "residual_pct": 0.0,
 }
 
+_LENS_PROFILE_RECORD = {
+    "schema_version": 1,
+    "camera_id": "phone-main",
+    "lens_id": "wide",
+    "image_width": 640,
+    "image_height": 480,
+    "orientation_deg": 0,
+    "board_columns": 9,
+    "board_rows": 6,
+    "square_size_m": 0.025,
+    "image_count": 9,
+    "camera_matrix": [[800.0, 0.0, 322.0], [0.0, 800.0, 238.0], [0.0, 0.0, 1.0]],
+    "distortion_coefficients": [-0.25, 0.08, 0.0, 0.0, 0.0],
+    "residual_px": 0.33,
+}
+
+
 _SAMPLE_RECORDS: dict[str, dict] = {
     "manifest": _MANIFEST_RECORD,
     "timeline_record": _TIMELINE_RECORD,
     "risk_event": _RISK_EVENT_RECORD,
     "trip_summary": _TRIP_SUMMARY_RECORD,
     "calibration_profile": _CALIBRATION_PROFILE_RECORD,
+    "lens_profile": _LENS_PROFILE_RECORD,
 }
 
 
