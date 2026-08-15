@@ -259,5 +259,21 @@ def benchmark(
         raise typer.Exit(2)
 
 
+schemas_app = typer.Typer(help="Artifact schema management.")
+app.add_typer(schemas_app, name="schemas")
+
+
+@schemas_app.command("export")
+def export_schemas_cmd(
+    output: Annotated[Path, typer.Option("--output", "-o")] = Path("schemas"),
+) -> None:
+    """Write current artifact schemas as JSON Schema files."""
+    from roadrisk_vision.schema_export import export_schemas
+
+    written = export_schemas(output)
+    for name, path in written.items():
+        typer.secho(f"{name}: {path}", fg=typer.colors.GREEN)
+
+
 if __name__ == "__main__":
     app()

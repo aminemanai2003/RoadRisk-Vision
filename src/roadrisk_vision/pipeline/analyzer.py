@@ -18,7 +18,7 @@ from roadrisk_vision.io import FrameStream, RunStore, load_telemetry, normalize_
 from roadrisk_vision.perception import CompositeBackend, MockBackend, PerceptionBackend
 from roadrisk_vision.rendering import FFmpegVideoWriter, render_frame
 from roadrisk_vision.risk import RiskEngine
-from roadrisk_vision.schemas import TripSummary
+from roadrisk_vision.schemas import TimelineRecord, TripSummary
 from roadrisk_vision.tracking import ByteTrackAdapter, IoUTracker
 
 LOGGER = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ def analyze_video(options: AnalysisOptions) -> Path:
             tracker = ByteTrackAdapter(frame_rate=round(normalized_info.fps))
         geometry = GeometryEstimator(calibration)
         risk_engine = RiskEngine(store.run_id, config.risk)
-        timeline: list[dict[str, Any]] = []
+        timeline: list[TimelineRecord] = []
         frame_count = 0
         with (
             backend.open(config.models, config.device),
@@ -126,15 +126,15 @@ def analyze_video(options: AnalysisOptions) -> Path:
                 )
                 writer.write(render_frame(packet.image, perception, risk))
                 timeline.append(
-                    {
-                        "frame_index": packet.frame_index,
-                        "video_time_ms": packet.video_time_ms,
-                        "warning_state": risk.warning_state.value,
-                        "severity": int(risk.severity) if risk.severity else None,
-                        "object_count": len(perception.detections),
-                        "lane_departure": lane_evidence is not None,
-                        "lane_confidence": lane_evidence.confidence if lane_evidence else None,
-                    }
+                    TimelineRecord(
+                        frame_index=packet.frame_index,
+                        video_time_ms=packet.video_time_ms,
+                        warning_state=risk.warning_state,
+                        severity=int(risk.severity) if risk.severity else None,
+                        object_count=len(perception.detections),
+                        lane_departure=lane_evidence is not None,
+                        lane_confidence=lane_evidence.confidence if lane_evidence else None,
+                    )
                 )
                 frame_count += 1
         events = risk_engine.finish()
@@ -146,7 +146,7 @@ def analyze_video(options: AnalysisOptions) -> Path:
                         "latitude": point.latitude,
                         "longitude": point.longitude,
                     }
-        duration_ms = timeline[-1]["video_time_ms"] if timeline else 0
+        duration_ms = timeline[-1].video_time_ms if timeline else 0
         store.write_events(events)
         store.write_timeline(timeline)
         store.write_summary(_summary(store.run_id, duration_ms, events, telemetry))
